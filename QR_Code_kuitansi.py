@@ -144,29 +144,65 @@ with tab1:
                     st.error(f"Terjadi kesalahan saat memproses: {e}")
 
 # --- TAB 2: VERIFIKASI KUITANSI ---
+# --- TAB 2: VERIFIKASI KUITANSI ---
 with tab2:
     st.subheader("Cek Keaslian Kuitansi")
-    st.write("Unggah foto QR Code kuitansi yang ingin Anda cek kevalidannya.")
+    st.write("Unggah foto atau screenshot QR Code kuitansi untuk mengecek kevalidannya.")
     
+    # 1. Wadah untuk Upload Gambar
     uploaded_file = st.file_uploader("Pilih file gambar QR Code", type=["png", "jpg", "jpeg"])
     
     if uploaded_file is not None:
-        with st.spinner("Membaca dan memverifikasi QR Code..."):
+        # Gunakan spinner untuk proses membaca gambar
+        with st.spinner("Membaca data dari gambar QR Code..."):
             try:
-                # Membaca QR Code dari Gambar yang diunggah
-                from qrcode.image.pure import PyPNGImage
-                # Catatan: Untuk membaca QR code di web asli, biasanya menggunakan library 'pyzbar' atau 'opencv'.
-                # Di bawah ini adalah simulasi pembacaan data teks QR untuk kemudahan demonstrasi tanpa instalasi driver rumit.
+                # Import library pembaca di dalam fungsi agar rapi
+                from pyzbar.pyzbar import decode
+                from PIL import Image
                 
-                # Skenario simulasi pembacaan QR via text/file teks demi kemudahan pengguna awam:
-                # (Sebagai alternatif agar tidak perlu install tools C++ seperti Zbar di laptop Anda)
-                st.info("Sistem mendeteksi QR Code. Mengecek tanda tangan digital...")
+                # Buka gambar yang diunggah
+                img = Image.open(uploaded_file)
                 
-                # *Guna memudahkan testing tanpa library scanner pihak ketiga yang rumit di laptop awam:*
-                # Kita sediakan opsi input teks hasil scan / kode kuitansi di bawah ini jika scanner gambar butuh library tambahan.
-                st.write("---")
+                # Tampilkan gambar yang diunggah di layar agar user tahu gambarnya terbaca
+                st.image(img, caption="Gambar yang Anda Unggah", width=200)
+                
+                # Proses scan/baca QR code dari gambar
+                decoded_objects = decode(img)
+                
+                if not decoded_objects:
+                    st.error("🚨 QR Code tidak terdeteksi! Pastikan gambar jelas, tidak buram, dan posisi QR Code terlihat utuh.")
+                else:
+                    # Jika QR Code ketemu, ambil teks di dalamnya
+                    teks_qr = decoded_objects[0].data.decode('utf-8')
+                    
+                    # Dekode teks JSON dari QR Code
+                    paket = json.loads(teks_qr)
+                    data_asli = paket["data"]
+                    signature_asli = paket["signature"]
+                    
+                    # Rekonstruksi data untuk pengecekan
+                    data_string_cek = json.dumps(data_asli, sort_keys=True)
+                    
+                    # Lakukan Verifikasi dengan Kunci Publik
+                    is_valid = verifikasi_signature(data_string_cek, signature_asli, PUBLIC_KEY)
+                    
+                    st.markdown("---")
+                    if is_valid:
+                        st.success("✅ KUITANSI VALID & ASLI (TERVERIFIKASI)!")
+                        st.write("Data di bawah ini 100% akurat dan belum pernah diubah sejak dibuat.")
+                        
+                        # Tampilkan data dalam tabel yang rapi
+                        st.table({
+                            "Parameter": ["Penjual", "Pembeli", "Lokasi", "Nominal Transaksi"],
+                            "Nilai": [data_asli['penjual'], data_asli['pembeli'], data_asli['lokasi'], f"Rp {data_asli['nominal']:,}"]
+                        })
+                    else:
+                        st.error("🚨 KUITANSI PALSU ATAU SUDAH DIEDIT!")
+                        st.write("Peringatan: Isi kuitansi ini sudah dimanipulasi dan tidak cocok dengan tanda tangan digital aslinya!")
+                        
             except Exception as e:
-                st.error(f"Gagal membaca gambar: {e}")
+                st.error(f"Terjadi kesalahan saat membaca file: {e}")
+                st.info("Tips: Pastikan file yang Anda upload adalah benar-benar gambar QR Code hasil download dari Tab 1.")
                 
     # Opsi Cadangan: Verifikasi via teks hasil scan (Sangat praktis untuk prototype)
     st.markdown("##### Atau Tempel Teks/Kode QR di Sini untuk Memeriksa:")
