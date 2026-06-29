@@ -82,7 +82,7 @@ with tab1:
         penjual = st.text_input("Nama Pihak 1 (Penjual/Pemberi):", placeholder="Contoh: PT. Maju Jaya")
         pembeli = st.text_input("Nama Pihak 2 (Pembeli/Penerima):", placeholder="Contoh: Budi Santoso")
     with col2:
-        lokasi = st.text_input("Lokasi Transaksi:", placeholder="Contoh: Jakarta Pusat")
+        lokasi = st.text_input("Lokasi Transaksi:", value="Banjarsari-Cerme")
         nominal = st.number_input("Besaran Transaksi (Rp):", min_value=0, step=1000, value=500000)
 
     if st.button("Generate Kuitansi & QR Code", type="primary"):
