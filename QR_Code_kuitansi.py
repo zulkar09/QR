@@ -79,7 +79,7 @@ with tab1:
     
     col1, col2 = st.columns(2)
     with col1:
-        penjual = st.text_input("Nama Pihak 1 (Penjual/Pemberi):", placeholder="Contoh: PT. Maju Jaya")
+        penjual = st.text_input("Nama Pihak 1 (Penjual/Pemberi):", value="Koperasi Ranting Banjarsari")
         pembeli = st.text_input("Nama Pihak 2 (Pembeli/Penerima):", placeholder="Contoh: Budi Santoso")
     with col2:
         lokasi = st.text_input("Lokasi Transaksi:", value="Banjarsari-Cerme")
